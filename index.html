@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dein persönlicher Song-Assistent</title>
+</head>
+<body style="font-family:Arial;max-width:600px;margin:auto;padding:20px;">
+  <h1>🎵 Dein persönlicher Song-Assistent</h1>
+  <p>Beantworte ein paar Fragen – dein Lied entsteht Schritt für Schritt.</p>
+
+  <form id="songForm">
+    <label>Name:</label><br>
+    <input name="name" required><br><br>
+
+    <label>E-Mail:</label><br>
+    <input name="email" type="email" required><br><br>
+
+    <label>Worum geht es in deiner Geschichte?</label><br>
+    <textarea name="beschreibung" rows="4" required></textarea><br><br>
+
+    <label>Zahlungsart:</label><br>
+    <select name="zahlung">
+      <option>Überweisung</option>
+      <option>PayPal</option>
+    </select><br><br>
+
+    <button type="submit">Song-Assistent starten 🎶</button>
+  </form>
+
+  <div id="output" style="margin-top:20px;"></div>
+
+  <script>
+    document.getElementById('songForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target));
+      document.getElementById('output').innerHTML = "<p>GPT denkt nach...</p>";
+
+      const res = await fetch('/api/songchat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user: formData })
+      });
+      const data = await res.json();
+      document.getElementById('output').innerHTML = `<pre>${data.reply}</pre>`;
+    });
+  </script>
+</body>
+</html>
