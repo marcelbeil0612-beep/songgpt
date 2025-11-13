@@ -620,7 +620,12 @@
             // Musikstil zusammenstellen
             let style = document.getElementById('style').value;
             if (style === 'Anderes') {
-                style = document.getElementById('customStyle').value || '';
+                style = document.getElementById('customStyle').value.trim();
+                if (!style) {
+                    showError('Bitte gib einen Musikstil ein oder wähle einen aus der Liste.');
+                    document.getElementById('formContainer').style.display = 'block';
+                    return;
+                }
             }
 
             // Instrumente zusammenstellen
@@ -658,18 +663,38 @@
                     body: JSON.stringify(formData)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // Wenn die Antwort kein JSON ist
+                    throw new Error(`Ungültige Antwort vom Server (Status: ${response.status})`);
                 }
 
-                const data = await response.json();
+                if (!response.ok) {
+                    const error = new Error(data.error || data.details || `HTTP error! status: ${response.status}`);
+                    error.response = response;
+                    error.errorData = data;
+                    throw error;
+                }
 
                 // Ergebnis anzeigen
                 displayResult(data);
 
             } catch (error) {
                 console.error('Fehler:', error);
-                showError('Es ist ein Fehler aufgetreten. Bitte versuche es später erneut. ' + error.message);
+                let errorMessage = 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.';
+                
+                // Versuche, detaillierte Fehlermeldung von der API zu erhalten
+                if (error.errorData) {
+                    if (error.errorData.error || error.errorData.details) {
+                        errorMessage = error.errorData.details || error.errorData.error || errorMessage;
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showError(errorMessage);
                 document.getElementById('formContainer').style.display = 'block';
                 document.getElementById('progressContainer').classList.remove('active');
             } finally {
@@ -677,12 +702,19 @@
             }
         });
 
+        // Hilfsfunktion zum Escapen von HTML (XSS-Schutz)
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function displayResult(data) {
             const resultContent = document.getElementById('resultContent');
             
             // Wenn die Antwort bereits formatiert ist (String)
             if (typeof data === 'string') {
-                resultContent.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
+                resultContent.innerHTML = `<p>${escapeHtml(data).replace(/\n/g, '<br>')}</p>`;
             } 
             // Wenn es ein JSON-Objekt ist
             else if (data.briefing) {
@@ -690,35 +722,35 @@
                 let html = '';
 
                 if (briefing.thema) {
-                    html += `<div class="result-section"><h4>🎯 Thema/Geschichte</h4><p>${briefing.thema}</p></div>`;
+                    html += `<div class="result-section"><h4>🎯 Thema/Geschichte</h4><p>${escapeHtml(briefing.thema)}</p></div>`;
                 }
                 if (briefing.musikstil) {
-                    html += `<div class="result-section"><h4>🎵 Musikstil/Stimmung</h4><p>${briefing.musikstil}</p></div>`;
+                    html += `<div class="result-section"><h4>🎵 Musikstil/Stimmung</h4><p>${escapeHtml(briefing.musikstil)}</p></div>`;
                 }
                 if (briefing.gesangsstimme) {
-                    html += `<div class="result-section"><h4>🎤 Gesangsstimme</h4><p>${briefing.gesangsstimme}</p></div>`;
+                    html += `<div class="result-section"><h4>🎤 Gesangsstimme</h4><p>${escapeHtml(briefing.gesangsstimme)}</p></div>`;
                 }
                 if (briefing.instrumente) {
-                    html += `<div class="result-section"><h4>🎸 Instrumente</h4><p>${briefing.instrumente}</p></div>`;
+                    html += `<div class="result-section"><h4>🎸 Instrumente</h4><p>${escapeHtml(briefing.instrumente)}</p></div>`;
                 }
                 if (briefing.refrain) {
-                    html += `<div class="result-section"><h4>🎶 Refrain/Kernaussage</h4><p>${briefing.refrain}</p></div>`;
+                    html += `<div class="result-section"><h4>🎶 Refrain/Kernaussage</h4><p>${escapeHtml(briefing.refrain)}</p></div>`;
                 }
                 if (briefing.besonderheiten) {
-                    html += `<div class="result-section"><h4>✨ Besonderheiten/Wünsche</h4><p>${briefing.besonderheiten}</p></div>`;
+                    html += `<div class="result-section"><h4>✨ Besonderheiten/Wünsche</h4><p>${escapeHtml(briefing.besonderheiten)}</p></div>`;
                 }
                 if (briefing.gesangsstil) {
-                    html += `<div class="result-section"><h4>🎭 Gesangsstil</h4><p>${briefing.gesangsstil}</p></div>`;
+                    html += `<div class="result-section"><h4>🎭 Gesangsstil</h4><p>${escapeHtml(briefing.gesangsstil)}</p></div>`;
                 }
                 if (briefing.emotion) {
-                    html += `<div class="result-section"><h4>💫 Emotion/Stimmung</h4><p>${briefing.emotion}</p></div>`;
+                    html += `<div class="result-section"><h4>💫 Emotion/Stimmung</h4><p>${escapeHtml(briefing.emotion)}</p></div>`;
                 }
 
                 resultContent.innerHTML = html || '<p>Briefing wurde erstellt, aber keine Details verfügbar.</p>';
             } 
             // Fallback
             else {
-                resultContent.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                resultContent.innerHTML = `<pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
             }
 
             document.getElementById('progressContainer').classList.remove('active');
