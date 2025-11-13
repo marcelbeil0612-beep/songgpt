@@ -139,6 +139,71 @@
             border-color: #667eea;
         }
 
+        .conditional-field {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .conditional-field.active {
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .instrument-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .instrument-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .instrument-checkbox:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .instrument-checkbox input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .custom-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .custom-input-group input {
+            flex: 1;
+        }
+
+        .custom-input-group .custom-label {
+            white-space: nowrap;
+            font-size: 0.9em;
+            color: #666;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 16px;
@@ -277,6 +342,19 @@
             .theme-btn {
                 width: 100%;
             }
+
+            .instrument-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .custom-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .custom-input-group .custom-label {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -314,6 +392,27 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Für wen wird das Lied geschrieben? <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="recipient-self" name="recipient" value="selbst" required>
+                            <label for="recipient-self">Für mich selbst</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="recipient-other" name="recipient" value="anderer" required>
+                            <label for="recipient-other">Für jemand anderen</label>
+                        </div>
+                    </div>
+                    <div class="conditional-field" id="recipientOtherFields">
+                        <input type="text" id="recipientName" name="recipientName" placeholder="Name oder Kosename der Person" style="margin-top: 15px;">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mentionName" name="mentionName">
+                            <label for="mentionName">Der Name soll im Lied erwähnt werden</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="story">Deine Geschichte / Beschreibung <span class="required">*</span></label>
                     <textarea id="story" name="story" placeholder="Erzähle uns deine Geschichte, Emotionen und Wünsche für den Song..." required></textarea>
                 </div>
@@ -346,15 +445,73 @@
                         <option value="Folk">Folk</option>
                         <option value="Jazz">Jazz</option>
                         <option value="Soul">Soul</option>
+                        <option value="R&B">R&B</option>
+                        <option value="Country">Country</option>
+                        <option value="Blues">Blues</option>
+                        <option value="Klassik">Klassik</option>
                         <option value="Indie">Indie</option>
                         <option value="Akustisch">Akustisch</option>
                         <option value="Elektronisch">Elektronisch</option>
+                        <option value="Hip-Hop">Hip-Hop</option>
+                        <option value="Reggae">Reggae</option>
+                        <option value="Latin">Latin</option>
+                        <option value="Anderes">Anderes (selbst eingeben)</option>
                     </select>
+                    <div class="conditional-field" id="customStyleField">
+                        <div class="custom-input-group" style="margin-top: 15px;">
+                            <input type="text" id="customStyle" name="customStyle" placeholder="Eigener Musikstil">
+                            <span class="custom-label">oder</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="instruments">Instrumente (optional)</label>
-                    <input type="text" id="instruments" name="instruments" placeholder="z.B. Gitarre, Klavier, Streicher...">
+                    <div class="instrument-grid">
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-guitar" name="instruments" value="Gitarre">
+                            <label for="inst-guitar">Gitarre</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-piano" name="instruments" value="Klavier">
+                            <label for="inst-piano">Klavier</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-drums" name="instruments" value="Schlagzeug">
+                            <label for="inst-drums">Schlagzeug</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-bass" name="instruments" value="Bass">
+                            <label for="inst-bass">Bass</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-strings" name="instruments" value="Streicher">
+                            <label for="inst-strings">Streicher</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-synth" name="instruments" value="Synthesizer">
+                            <label for="inst-synth">Synthesizer</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-violin" name="instruments" value="Violine">
+                            <label for="inst-violin">Violine</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-saxophone" name="instruments" value="Saxophon">
+                            <label for="inst-saxophone">Saxophon</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-flute" name="instruments" value="Flöte">
+                            <label for="inst-flute">Flöte</label>
+                        </div>
+                        <div class="instrument-checkbox">
+                            <input type="checkbox" id="inst-harp" name="instruments" value="Harfe">
+                            <label for="inst-harp">Harfe</label>
+                        </div>
+                    </div>
+                    <div class="custom-input-group">
+                        <input type="text" id="customInstruments" name="customInstruments" placeholder="Weitere Instrumente (kommagetrennt)">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -398,6 +555,31 @@
             });
         });
 
+        // Empfänger-Auswahl: Felder ein-/ausblenden
+        document.querySelectorAll('input[name="recipient"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const recipientOtherFields = document.getElementById('recipientOtherFields');
+                if (this.value === 'anderer') {
+                    recipientOtherFields.classList.add('active');
+                } else {
+                    recipientOtherFields.classList.remove('active');
+                    document.getElementById('recipientName').value = '';
+                    document.getElementById('mentionName').checked = false;
+                }
+            });
+        });
+
+        // Musikstil: Custom-Feld ein-/ausblenden
+        document.getElementById('style').addEventListener('change', function() {
+            const customStyleField = document.getElementById('customStyleField');
+            if (this.value === 'Anderes') {
+                customStyleField.classList.add('active');
+            } else {
+                customStyleField.classList.remove('active');
+                document.getElementById('customStyle').value = '';
+            }
+        });
+
         // Formular-Submit
         document.getElementById('songForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -409,6 +591,20 @@
                 return;
             }
 
+            const recipient = document.querySelector('input[name="recipient"]:checked');
+            if (!recipient) {
+                showError('Bitte wähle aus, für wen das Lied geschrieben wird.');
+                return;
+            }
+
+            if (recipient.value === 'anderer') {
+                const recipientName = document.getElementById('recipientName').value.trim();
+                if (!recipientName) {
+                    showError('Bitte gib den Namen oder Kosenamen der Person an, für die das Lied geschrieben wird.');
+                    return;
+                }
+            }
+
             // UI-Status ändern
             document.getElementById('formContainer').style.display = 'none';
             document.getElementById('errorMessage').classList.remove('active');
@@ -417,14 +613,38 @@
             document.getElementById('submitBtn').disabled = true;
 
             // Formulardaten sammeln
+            const recipientValue = recipient.value;
+            const recipientName = recipientValue === 'anderer' ? document.getElementById('recipientName').value : '';
+            const mentionName = recipientValue === 'anderer' ? document.getElementById('mentionName').checked : false;
+
+            // Musikstil zusammenstellen
+            let style = document.getElementById('style').value;
+            if (style === 'Anderes') {
+                style = document.getElementById('customStyle').value || '';
+            }
+
+            // Instrumente zusammenstellen
+            const selectedInstruments = Array.from(document.querySelectorAll('input[name="instruments"]:checked')).map(cb => cb.value);
+            const customInstruments = document.getElementById('customInstruments').value;
+            let instruments = '';
+            if (selectedInstruments.length > 0) {
+                instruments = selectedInstruments.join(', ');
+            }
+            if (customInstruments) {
+                instruments = instruments ? instruments + ', ' + customInstruments : customInstruments;
+            }
+
             const formData = {
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
                 theme: theme,
+                recipient: recipientValue,
+                recipientName: recipientName,
+                mentionName: mentionName,
                 story: document.getElementById('story').value,
                 voice: document.querySelector('input[name="voice"]:checked').value,
-                style: document.getElementById('style').value,
-                instruments: document.getElementById('instruments').value,
+                style: style,
+                instruments: instruments,
                 chorus: document.getElementById('chorus').value,
                 special: document.getElementById('special').value
             };
@@ -515,6 +735,8 @@
             document.getElementById('songForm').reset();
             document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('selected'));
             document.getElementById('theme').value = '';
+            document.getElementById('recipientOtherFields').classList.remove('active');
+            document.getElementById('customStyleField').classList.remove('active');
             document.getElementById('formContainer').style.display = 'block';
             document.getElementById('resultContainer').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
