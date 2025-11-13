@@ -202,3 +202,24 @@ Sei präzise, kreativ und einfühlsam.`;
     console.error('Server-Fehler:', error);
 
     // Spezifische Fehlerbehandlung
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      return res.status(504).json({
+        error: 'Timeout',
+        details: 'Die Anfrage hat zu lange gedauert. Bitte versuche es erneut.'
+      });
+    }
+
+    if (error instanceof SyntaxError && error.message.includes('JSON')) {
+      return res.status(500).json({
+        error: 'Parsing-Fehler',
+        details: 'Die KI-Antwort konnte nicht verarbeitet werden.'
+      });
+    }
+
+    // Generischer Fehler
+    return res.status(500).json({
+      error: 'Interner Serverfehler',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Ein unerwarteter Fehler ist aufgetreten.'
+    });
+  }
+}
