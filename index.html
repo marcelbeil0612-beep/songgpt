@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Empathischer Song-Assistent für persönliche Liedtexte - Erstelle individuelle Song-Briefings mit KI">
+    <meta name="keywords" content="Song, Liedtext, KI, GPT, Musik, Song-Assistent">
+    <meta name="author" content="Marcel & Elke - Seelenklang Song">
     <title>SongGPT - Dein empathischer Song-Assistent</title>
     <style>
         * {
@@ -204,6 +207,34 @@
             color: #666;
         }
 
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .char-count {
+            display: block;
+            text-align: right;
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .char-count.warning {
+            color: #f39c12;
+        }
+
+        .char-count.error {
+            color: #e74c3c;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 16px;
@@ -371,12 +402,14 @@
             <form id="songForm">
                 <div class="form-group">
                     <label for="name">Name <span class="required">*</span></label>
-                    <input type="text" id="name" name="name" required>
+                    <input type="text" id="name" name="name" required maxlength="100" aria-required="true" aria-describedby="name-help">
+                    <small id="name-help" class="sr-only">Bitte gib deinen Namen ein</small>
                 </div>
 
                 <div class="form-group">
                     <label for="email">E-Mail <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required maxlength="255" aria-required="true" aria-describedby="email-help">
+                    <small id="email-help" class="sr-only">Bitte gib deine E-Mail-Adresse ein</small>
                 </div>
 
                 <div class="form-group">
@@ -414,7 +447,8 @@
 
                 <div class="form-group">
                     <label for="story">Deine Geschichte / Beschreibung <span class="required">*</span></label>
-                    <textarea id="story" name="story" placeholder="Erzähle uns deine Geschichte, Emotionen und Wünsche für den Song..." required></textarea>
+                    <textarea id="story" name="story" placeholder="Erzähle uns deine Geschichte, Emotionen und Wünsche für den Song..." required maxlength="2000" aria-required="true" aria-describedby="story-help"></textarea>
+                    <small id="story-help" class="char-count">0 / 2000 Zeichen</small>
                 </div>
 
                 <div class="form-group">
@@ -516,12 +550,12 @@
 
                 <div class="form-group">
                     <label for="chorus">Refrain-Wunsch / Kernaussage (optional)</label>
-                    <textarea id="chorus" name="chorus" placeholder="Gibt es eine bestimmte Botschaft oder einen Refrain, der unbedingt vorkommen soll?"></textarea>
+                    <textarea id="chorus" name="chorus" placeholder="Gibt es eine bestimmte Botschaft oder einen Refrain, der unbedingt vorkommen soll?" maxlength="500"></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="special">Besonderheiten / Wünsche (optional)</label>
-                    <textarea id="special" name="special" placeholder="Weitere Wünsche, besondere Erwähnungen, Stilrichtungen..."></textarea>
+                    <textarea id="special" name="special" placeholder="Weitere Wünsche, besondere Erwähnungen, Stilrichtungen..." maxlength="500"></textarea>
                 </div>
 
                 <button type="submit" class="submit-btn" id="submitBtn">
@@ -580,6 +614,22 @@
             }
         });
 
+        // Zeichenzähler für Story-Textarea
+        const storyTextarea = document.getElementById('story');
+        const storyHelp = document.getElementById('story-help');
+        if (storyTextarea && storyHelp) {
+            storyTextarea.addEventListener('input', function() {
+                const length = this.value.length;
+                storyHelp.textContent = `${length} / 2000 Zeichen`;
+                storyHelp.classList.remove('warning', 'error');
+                if (length > 1800) {
+                    storyHelp.classList.add('error');
+                } else if (length > 1500) {
+                    storyHelp.classList.add('warning');
+                }
+            });
+        }
+
         // Formular-Submit
         document.getElementById('songForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -612,9 +662,9 @@
             document.getElementById('resultContainer').classList.remove('active');
             document.getElementById('submitBtn').disabled = true;
 
-            // Formulardaten sammeln
+            // Formulardaten sammeln und sanitizen
             const recipientValue = recipient.value;
-            const recipientName = recipientValue === 'anderer' ? document.getElementById('recipientName').value : '';
+            const recipientName = recipientValue === 'anderer' ? document.getElementById('recipientName').value.trim() : '';
             const mentionName = recipientValue === 'anderer' ? document.getElementById('mentionName').checked : false;
 
             // Musikstil zusammenstellen
@@ -639,20 +689,34 @@
                 instruments = instruments ? instruments + ', ' + customInstruments : customInstruments;
             }
 
+            // Eingaben trimmen und validieren
             const formData = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                theme: theme,
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim().toLowerCase(),
+                theme: theme.trim(),
                 recipient: recipientValue,
-                recipientName: recipientName,
+                recipientName: recipientName.trim(),
                 mentionName: mentionName,
-                story: document.getElementById('story').value,
+                story: document.getElementById('story').value.trim(),
                 voice: document.querySelector('input[name="voice"]:checked').value,
-                style: style,
-                instruments: instruments,
-                chorus: document.getElementById('chorus').value,
-                special: document.getElementById('special').value
+                style: style.trim(),
+                instruments: instruments.trim(),
+                chorus: document.getElementById('chorus').value.trim(),
+                special: document.getElementById('special').value.trim()
             };
+
+            // Zusätzliche Validierung: Leere Strings entfernen
+            if (!formData.name || formData.name.length < 2) {
+                showError('Bitte gib einen gültigen Namen ein (mindestens 2 Zeichen).');
+                document.getElementById('formContainer').style.display = 'block';
+                return;
+            }
+
+            if (!formData.story || formData.story.length < 10) {
+                showError('Bitte gib eine ausführlichere Geschichte ein (mindestens 10 Zeichen).');
+                document.getElementById('formContainer').style.display = 'block';
+                return;
+            }
 
             try {
                 const response = await fetch('/api/songchat', {
@@ -769,6 +833,14 @@
             document.getElementById('theme').value = '';
             document.getElementById('recipientOtherFields').classList.remove('active');
             document.getElementById('customStyleField').classList.remove('active');
+            
+            // Zeichenzähler zurücksetzen
+            const storyHelp = document.getElementById('story-help');
+            if (storyHelp) {
+                storyHelp.textContent = '0 / 2000 Zeichen';
+                storyHelp.classList.remove('warning', 'error');
+            }
+            
             document.getElementById('formContainer').style.display = 'block';
             document.getElementById('resultContainer').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
