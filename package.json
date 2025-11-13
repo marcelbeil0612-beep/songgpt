@@ -1,0 +1,24 @@
+{
+  "name": "songgpt",
+  "version": "1.0.0",
+  "description": "Empathischer Song-Assistent für persönliche Liedtexte",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "song",
+    "ai",
+    "gpt",
+    "lyrics",
+    "music"
+  ],
+  "author": "Marcel & Elke",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.x"
+  }
+}
+
