@@ -1,8 +1,38 @@
+// Hilfsfunktion zum Sanitizen von Eingaben
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return '';
+  return input.trim().replace(/[<>]/g, '');
+}
+
+// Hilfsfunktion zur Validierung der Eingabelänge
+function validateLength(value, min, max, fieldName) {
+  if (!value || value.length < min) {
+    return { valid: false, error: `${fieldName} muss mindestens ${min} Zeichen lang sein.` };
+  }
+  if (value.length > max) {
+    return { valid: false, error: `${fieldName} darf maximal ${max} Zeichen lang sein.` };
+  }
+  return { valid: true };
+}
+
 export default async function handler(req, res) {
-  // CORS-Header für Cross-Origin Requests
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS-Header für Cross-Origin Requests (könnte restriktiver sein in Produktion)
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://songgpt.vercel.app',
+    'https://songgpt-eight.vercel.app',
+    'http://localhost:3000'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Fallback für Entwicklung
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 Stunden
 
   // OPTIONS-Request für Preflight
   if (req.method === 'OPTIONS') {
@@ -15,8 +45,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Inputvalidierung
-    const {
+    // Inputvalidierung und Sanitization
+    let {
       name,
       email,
       theme,
@@ -30,6 +60,19 @@ export default async function handler(req, res) {
       chorus,
       special
     } = req.body;
+
+    // Sanitize alle String-Eingaben
+    name = sanitizeInput(name);
+    email = sanitizeInput(email);
+    theme = sanitizeInput(theme);
+    recipient = sanitizeInput(recipient);
+    recipientName = sanitizeInput(recipientName);
+    story = sanitizeInput(story);
+    voice = sanitizeInput(voice);
+    style = sanitizeInput(style);
+    instruments = sanitizeInput(instruments);
+    chorus = sanitizeInput(chorus);
+    special = sanitizeInput(special);
 
     // Pflichtfelder prüfen
     if (!name || !email || !theme || !story || !voice || !recipient) {
@@ -46,6 +89,24 @@ export default async function handler(req, res) {
       });
     }
 
+    // Eingabelängen validieren
+    const nameValidation = validateLength(name, 2, 100, 'Name');
+    if (!nameValidation.valid) {
+      return res.status(400).json({ error: nameValidation.error });
+    }
+
+    const storyValidation = validateLength(story, 10, 2000, 'Geschichte');
+    if (!storyValidation.valid) {
+      return res.status(400).json({ error: storyValidation.error });
+    }
+
+    if (recipientName) {
+      const recipientNameValidation = validateLength(recipientName, 1, 100, 'Empfängername');
+      if (!recipientNameValidation.valid) {
+        return res.status(400).json({ error: recipientNameValidation.error });
+      }
+    }
+
     // Wenn für jemand anderen, muss Name angegeben werden
     if (recipient === 'anderer' && !recipientName) {
       return res.status(400).json({
@@ -53,9 +114,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // E-Mail-Validierung (einfach)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // E-Mail-Validierung (robuster)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email) || email.length > 255) {
       return res.status(400).json({ error: 'Ungültige E-Mail-Adresse' });
     }
 
@@ -86,7 +147,7 @@ Antworte NUR mit einem gültigen JSON-Objekt im folgenden Format (keine zusätzl
 
 Sei präzise, kreativ und einfühlsam.`;
 
-    // User-Prompt zusammenstellen
+    // User-Prompt zusammenstellen (Eingaben sind bereits sanitized)
     let userPrompt = `Erstelle ein Song-Briefing für:\n\n`;
     userPrompt += `**Name des Auftraggebers:** ${name}\n`;
     userPrompt += `**Thema:** ${theme}\n`;
@@ -116,6 +177,9 @@ Sei präzise, kreativ und einfühlsam.`;
     if (special) {
       userPrompt += `**Besonderheiten:** ${special}\n`;
     }
+
+    // Logging (ohne sensible Daten)
+    console.log(`[SongGPT] Request von ${email.substring(0, 3)}***@*** - Thema: ${theme}`);
 
     // OpenRouter API aufrufen
     const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
