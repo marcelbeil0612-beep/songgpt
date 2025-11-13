@@ -20,6 +20,9 @@ export default async function handler(req, res) {
       name,
       email,
       theme,
+      recipient,
+      recipientName,
+      mentionName,
       story,
       voice,
       style,
@@ -29,16 +32,24 @@ export default async function handler(req, res) {
     } = req.body;
 
     // Pflichtfelder prüfen
-    if (!name || !email || !theme || !story || !voice) {
+    if (!name || !email || !theme || !story || !voice || !recipient) {
       return res.status(400).json({
         error: 'Fehlende Pflichtfelder',
         missing: {
           name: !name,
           email: !email,
           theme: !theme,
+          recipient: !recipient,
           story: !story,
           voice: !voice
         }
+      });
+    }
+
+    // Wenn für jemand anderen, muss Name angegeben werden
+    if (recipient === 'anderer' && !recipientName) {
+      return res.status(400).json({
+        error: 'Bitte gib den Namen oder Kosenamen der Person an, für die das Lied geschrieben wird.'
       });
     }
 
@@ -77,8 +88,19 @@ Sei präzise, kreativ und einfühlsam.`;
 
     // User-Prompt zusammenstellen
     let userPrompt = `Erstelle ein Song-Briefing für:\n\n`;
-    userPrompt += `**Name:** ${name}\n`;
+    userPrompt += `**Name des Auftraggebers:** ${name}\n`;
     userPrompt += `**Thema:** ${theme}\n`;
+    
+    // Empfänger-Informationen
+    if (recipient === 'selbst') {
+      userPrompt += `**Für wen:** Das Lied wird für den Auftraggeber selbst geschrieben\n`;
+    } else {
+      userPrompt += `**Für wen:** Das Lied wird für ${recipientName} geschrieben\n`;
+      if (mentionName) {
+        userPrompt += `**Wichtig:** Der Name "${recipientName}" soll im Liedtext erwähnt werden\n`;
+      }
+    }
+    
     userPrompt += `**Geschichte/Beschreibung:** ${story}\n`;
     userPrompt += `**Gesangsstimme:** ${voice}\n`;
     
